@@ -1,0 +1,93 @@
+name: Build & Deploy
+
+# Cada merge na main gera a imagem Docker aqui no GitHub Actions,
+# publica no GHCR e pede para o Dokploy implantar essa versão.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      repo: ${{ steps.meta.outputs.repo }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Image name
+        id: meta
+        run: |
+          # O nome do repositório termina com hífen, e o GHCR recusa esse caractere no fim.
+          IMAGE=$(echo "ghcr.io/${{ github.repository }}" | tr '[A-Z]' '[a-z]' | sed -E 's/[-._]+$//')
+          echo "repo=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        run: |
+          docker buildx build \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
+            --build-arg VITE_API_URL=https://unicolab-api.thebylito.dev \
+            --label org.opencontainers.image.source=https://github.com/${{ github.repository }} \
+            --push \
+            --tag ${{ steps.meta.outputs.image }} \
+            --tag ${{ steps.meta.outputs.repo }}:latest \
+            .
+
+      - name: Confirmar imagem pública
+        run: |
+          repo="${{ steps.meta.outputs.repo }}"
+          name="${repo#ghcr.io/}"
+          # Publicado com GITHUB_TOKEN num repositório público, o pacote já nasce público.
+          # O token do Actions não altera visibilidade em /user/packages (responde 404).
+          token=$(curl -fsS "https://ghcr.io/token?service=ghcr.io&scope=repository:${name}:pull" | jq -r .token)
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${token}" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            "https://ghcr.io/v2/${name}/manifests/latest")
+          if [ "$code" != "200" ]; then
+            echo "A imagem ${repo} não está pública (HTTP ${code})."
+            exit 1
+          fi
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      # Enquanto os secrets do Dokploy não forem cadastrados, só a imagem é publicada.
+      - name: Check Dokploy secrets
+        id: check
+        env:
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+        run: |
+          if [ -z "$DOKPLOY_API_KEY" ]; then
+            echo "::warning::Secrets do Dokploy não configurados — deploy ignorado (imagem publicada no GHCR)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to Dokploy
+        if: steps.check.outputs.ok == 'true'
+        uses: nodilabs/dokploy-deploy-action@v0.1.0
+        with:
+          dokploy_api_key: ${{ secrets.DOKPLOY_API_KEY }}
+          dokploy_server_url: ${{ secrets.DOKPLOY_SERVER_URL }}
+          application_ids: ${{ secrets.DOKPLOY_APPLICATION_IDS }}
+          image_tag: ${{ needs.build-and-push.outputs.image }}
