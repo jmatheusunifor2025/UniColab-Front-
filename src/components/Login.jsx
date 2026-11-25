@@ -1,18 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Eye, EyeOff, Lock, Mail, UserRound, Hash, BookOpen, Sparkles, Check, ArrowRight, AlertCircle } from 'lucide-react';
-import { SessionUser } from '../types';
 import { listPublicCourses, registerAccount, signIn } from '../api/unicolab';
 
 const INSTITUTIONAL_EMAIL = /^[^\s@]+@edu\.unifor\.br$/i;
 
-interface LoginProps {
-  onLogin: (user: SessionUser, persist: boolean) => void;
-}
-
-type AuthMode = 'login' | 'register' | 'register-teacher' | 'forgot';
-type LegalKind = 'privacidade' | 'termos' | 'ajuda' | null;
-
-function passwordScore(password: string) {
+function passwordScore(password) {
   const rules = [
     { ok: password.length >= 12, label: '12+ caracteres' },
     { ok: /[a-z]/.test(password) && /[A-Z]/.test(password), label: 'Letras maiúsculas e minúsculas' },
@@ -24,8 +16,8 @@ function passwordScore(password: string) {
   return { rules, score, label };
 }
 
-export default function Login({ onLogin }: LoginProps) {
-  const [mode, setMode] = useState<AuthMode>('login');
+export default function Login({ onLogin }) {
+  const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -33,11 +25,11 @@ export default function Login({ onLogin }: LoginProps) {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
-  const [legal, setLegal] = useState<LegalKind>(null);
+  const [legal, setLegal] = useState(null);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [courses, setCourses] = useState<Array<{ id: number; nome: string }>>([]);
+  const [courses, setCourses] = useState([]);
   const [course, setCourse] = useState('');
   const [department, setDepartment] = useState('');
   const [enrollment, setEnrollment] = useState('');
@@ -64,11 +56,11 @@ export default function Login({ onLogin }: LoginProps) {
     };
   }, [mode]);
 
-  const enter = (user: SessionUser, keep: boolean) => {
+  const enter = (user, keep) => {
     onLogin(user, keep);
   };
 
-  const handleLogin = async (event: React.FormEvent) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     setError('');
     setInfo('');
@@ -84,7 +76,7 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const handleRegister = async (event: React.FormEvent) => {
+  const handleRegister = async (event) => {
     event.preventDefault();
     setError('');
     setInfo('');
@@ -138,7 +130,7 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const handleRegisterTeacher = async (event: React.FormEvent) => {
+  const handleRegisterTeacher = async (event) => {
     event.preventDefault();
     setError('');
     setInfo('');
@@ -188,7 +180,7 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const handleForgot = (event: React.FormEvent) => {
+  const handleForgot = (event) => {
     event.preventDefault();
     setError('');
     const key = username.toLowerCase().trim();
@@ -338,11 +330,14 @@ export default function Login({ onLogin }: LoginProps) {
                         Esqueci minha senha
                       </button>
                     </div>
-                    <Field icon={<Lock className="h-4 w-4" />} trailing={
-                      <button type="button" className="text-slate-400" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    }>
+                    <Field
+                      icon={<Lock className="h-4 w-4" />}
+                      trailing={(
+                        <button type="button" className="text-slate-400" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      )}
+                    >
                       <input
                         id="unicolab-password"
                         type={showPassword ? 'text' : 'password'}
@@ -397,11 +392,14 @@ export default function Login({ onLogin }: LoginProps) {
                     </Labeled>
                   </div>
                   <Labeled label="Senha">
-                    <Field icon={<Lock className="h-4 w-4" />} trailing={
-                      <button type="button" className="text-slate-400" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    }>
+                    <Field
+                      icon={<Lock className="h-4 w-4" />}
+                      trailing={(
+                        <button type="button" className="text-slate-400" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      )}
+                    >
                       <input type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className="h-12 w-full bg-transparent text-sm outline-none" />
                     </Field>
                     <div className="mt-2 grid grid-cols-4 gap-1.5">
@@ -473,11 +471,14 @@ export default function Login({ onLogin }: LoginProps) {
                     </Field>
                   </Labeled>
                   <Labeled label="Senha">
-                    <Field icon={<Lock className="h-4 w-4" />} trailing={
-                      <button type="button" className="text-slate-400" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    }>
+                    <Field
+                      icon={<Lock className="h-4 w-4" />}
+                      trailing={(
+                        <button type="button" className="text-slate-400" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}>
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      )}
+                    >
                       <input type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} className="h-12 w-full bg-transparent text-sm outline-none" />
                     </Field>
                     <div className="mt-2 grid grid-cols-4 gap-1.5">
@@ -585,7 +586,7 @@ export default function Login({ onLogin }: LoginProps) {
   );
 }
 
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
+function Labeled({ label, children }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
@@ -594,17 +595,7 @@ function Labeled({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
-function Field({
-  label,
-  icon,
-  trailing,
-  children,
-}: {
-  label?: string;
-  icon?: React.ReactNode;
-  trailing?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function Field({ label, icon, trailing, children }) {
   return (
     <div>
       {label && <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>}
@@ -617,7 +608,7 @@ function Field({
   );
 }
 
-function Alert({ text }: { text: string }) {
+function Alert({ text }) {
   return (
     <p className="flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700">
       <AlertCircle className="h-4 w-4 shrink-0" />

@@ -1,21 +1,11 @@
-import { useState, type ReactNode } from 'react';
-import { UserStats } from '../types';
+import { useState } from 'react';
 import { suggestTrailText } from '../api/unicolab';
 import PersonalSimulado from './PersonalSimulado';
 import { BookOpen, CalendarDays, RefreshCw, ShieldCheck, Sparkles, Stethoscope } from 'lucide-react';
 
-interface TrilhaIAProps {
-  stats: UserStats;
-  studentName: string;
-  eligible: number;
-  questionsReady: boolean;
-  creatingExam: boolean;
-  onCreateExam: (quantidade: number) => void;
-}
-
-export default function TrilhaIA({ stats, studentName, eligible, questionsReady, creatingExam, onCreateExam }: TrilhaIAProps) {
+export default function TrilhaIA({ stats, studentName, eligible, questionsReady, creatingExam, onCreateExam }) {
   const [loading, setLoading] = useState(false);
-  const [trilhaMarkdown, setTrilhaMarkdown] = useState<string | null>(null);
+  const [trilhaMarkdown, setTrilhaMarkdown] = useState(null);
   const [error, setError] = useState('');
 
   const weakAreas = stats.areas.filter((item) => item.score < 75).map((item) => item.name);
@@ -120,7 +110,7 @@ export default function TrilhaIA({ stats, studentName, eligible, questionsReady,
   );
 }
 
-function FloatCard({ className, icon, title, dark = false }: { className: string; icon: ReactNode; title: string; dark?: boolean }) {
+function FloatCard({ className, icon, title, dark = false }) {
   return (
     <div className={`absolute ${className} flex max-w-[180px] items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold shadow-sm ${dark ? 'bg-[#3a246f] text-white' : 'bg-white text-ink'}`}>
       <span className={dark ? 'text-white' : 'text-brand'}>{icon}</span>

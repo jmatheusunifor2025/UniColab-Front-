@@ -1,33 +1,23 @@
-import { Question } from '../types';
 import { BookOpen, MessageSquare, Plus } from 'lucide-react';
 
-interface TeacherDashboardProps {
-  displayName: string;
-  authorId: number;
-  questions: Question[];
-  onCadastrar: () => void;
-  onOpenForum: (question?: Question) => void;
-  onOpenBank: () => void;
-}
-
-function awaitsTeacher(question: Question) {
+function awaitsTeacher(question) {
   const human = question.comments.filter((comment) => comment.role !== 'ai');
   if (!human.some((comment) => comment.role === 'student')) return false;
   return human[human.length - 1].role === 'student';
 }
 
-export default function TeacherDashboard({ displayName, authorId, questions, onCadastrar, onOpenForum, onOpenBank }: TeacherDashboardProps) {
+export default function TeacherDashboard({ displayName, authorId, questions, onCadastrar, onOpenForum, onOpenBank }) {
   const authored = questions.filter((question) => question.authorId != null && question.authorId === authorId);
   const pending = questions.filter(awaitsTeacher);
   const teacherReplies = questions.reduce(
     (total, question) => total + question.comments.filter((comment) => comment.role === 'teacher').length,
-    0
+    0,
   );
   const areas = Array.from(
     questions.reduce((map, question) => {
       map.set(question.area, (map.get(question.area) || 0) + 1);
       return map;
-    }, new Map<string, number>())
+    }, new Map()),
   ).sort((left, right) => right[1] - left[1]);
   const maxArea = areas[0]?.[1] || 1;
 
@@ -125,7 +115,7 @@ export default function TeacherDashboard({ displayName, authorId, questions, onC
   );
 }
 
-function Metric({ label, value, alert = false }: { label: string; value: number; alert?: boolean }) {
+function Metric({ label, value, alert = false }) {
   return (
     <article className="rounded-2xl border border-line bg-white p-4">
       <p className="text-xs text-slate-500">{label}</p>

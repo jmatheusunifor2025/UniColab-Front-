@@ -1,5 +1,4 @@
-import { useState, type ReactNode } from 'react';
-import { SessionUser, SimulationHistoryItem } from '../types';
+import { useState } from 'react';
 import {
   Bell,
   BookOpen,
@@ -15,17 +14,14 @@ import {
   X,
 } from 'lucide-react';
 
-type StudentTab = 'dashboard' | 'banco' | 'forum' | 'trilha';
-type TeacherTab = 'painel' | 'banco' | 'provas' | 'forum' | 'config' | 'professor';
-
-const STUDENT_ITEMS: Array<{ id: StudentTab; label: string; icon: typeof LayoutDashboard }> = [
+const STUDENT_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'banco', label: 'Banco de questões', icon: BookOpen },
   { id: 'forum', label: 'Fórum de dúvidas', icon: MessageSquare },
   { id: 'trilha', label: 'Trilha IA', icon: Sparkles },
 ];
 
-const TEACHER_ITEMS: Array<{ id: Exclude<TeacherTab, 'professor'>; label: string; icon: typeof LayoutDashboard }> = [
+const TEACHER_ITEMS = [
   { id: 'painel', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'banco', label: 'Banco de questões', icon: BookOpen },
   { id: 'provas', label: 'Provas e listas', icon: ClipboardList },
@@ -43,16 +39,6 @@ export function StudentShell({
   simActive,
   onDiscardSim,
   children,
-}: {
-  user: SessionUser;
-  points: number;
-  activeTab: StudentTab;
-  history: SimulationHistoryItem[];
-  onNavigate: (tab: StudentTab) => void;
-  onLogout: () => void;
-  simActive: boolean;
-  onDiscardSim: () => void;
-  children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [bell, setBell] = useState(false);
@@ -156,12 +142,6 @@ export function TeacherShell({
   onNavigate,
   onLogout,
   children,
-}: {
-  user: SessionUser;
-  activeTab: TeacherTab;
-  onNavigate: (tab: TeacherTab) => void;
-  onLogout: () => void;
-  children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const current = activeTab === 'professor' ? 'banco' : activeTab;
@@ -241,7 +221,7 @@ function Brand() {
   );
 }
 
-function SiteFooter({ compact = false }: { compact?: boolean }) {
+function SiteFooter({ compact = false }) {
   return (
     <footer className="mt-8 bg-[#1a1033] px-4 py-8 text-xs text-white/70">
       <div className={`mx-auto flex w-full flex-col gap-4 md:flex-row md:justify-between ${compact ? 'max-w-6xl' : 'max-w-6xl'}`}>

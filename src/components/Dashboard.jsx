@@ -1,30 +1,19 @@
-import { useState, type ReactNode } from 'react';
-import { UserStats } from '../types';
+import { useState } from 'react';
 import { Award, BookOpen, Clock, Lock, Play, Sparkles, Target, Trophy } from 'lucide-react';
 
-interface DashboardProps {
-  stats: UserStats;
-  areas: { name: string; score: number }[];
-  displayName: string;
-  course: string;
-  exams: { id: string; title: string; minutes: number; questionCount: number }[];
-  onStartExam: (id: string) => void;
-  onSelectTrilha: () => void;
-}
-
-function barColor(score: number) {
+function barColor(score) {
   if (score >= 80) return 'bg-emerald-500';
   if (score >= 60) return 'bg-[#5b6cff]';
   return 'bg-rose-500';
 }
 
-function textColor(score: number) {
+function textColor(score) {
   if (score >= 80) return 'text-emerald-600';
   if (score >= 60) return 'text-[#4d5ef0]';
   return 'text-rose-600';
 }
 
-function Ring({ value }: { value: number }) {
+function Ring({ value }) {
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (Math.max(0, Math.min(100, value)) / 100) * circumference;
@@ -52,7 +41,7 @@ function Ring({ value }: { value: number }) {
   );
 }
 
-export default function Dashboard({ stats, areas, displayName, course, exams, onStartExam, onSelectTrilha }: DashboardProps) {
+export default function Dashboard({ stats, areas, displayName, course, exams, onStartExam, onSelectTrilha }) {
   const [showAllHistory, setShowAllHistory] = useState(false);
   const totalSimulados = stats.history.length;
   const avgScore = stats.completedQuestionsCount > 0
@@ -107,7 +96,7 @@ export default function Dashboard({ stats, areas, displayName, course, exams, on
         <StatCard icon={<Trophy className="h-4 w-4" />} tint="bg-amber-50 text-amber-600" label="Pontuação geral" value={stats.points.toLocaleString('pt-BR')} suffix="XP" note="nesta conta" />
         <StatCard icon={<BookOpen className="h-4 w-4" />} tint="bg-[#eef0ff] text-brand" label="Questões respondidas" value={String(stats.completedQuestionsCount)} suffix="praticadas" note="no banco e nos simulados" />
         <StatCard icon={<Target className="h-4 w-4" />} tint="bg-emerald-50 text-emerald-600" label="Média de acertos" value={`${avgScore}%`} suffix="geral" note="média dos simulados" />
-        <StatCard icon={<Clock className="h-4 w-4" />} tint="bg-sky-50 text-sky-600" label="Tempo de foco" value={focusMinutes ? String(Math.round(focusSeconds / 60)) : String(focusSeconds)} suffix={focusMinutes ? "min" : "s"} note="soma dos simulados" />
+        <StatCard icon={<Clock className="h-4 w-4" />} tint="bg-sky-50 text-sky-600" label="Tempo de foco" value={focusMinutes ? String(Math.round(focusSeconds / 60)) : String(focusSeconds)} suffix={focusMinutes ? 'min' : 's'} note="soma dos simulados" />
       </section>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-[#ddd8ff] bg-[#f7f5ff] p-4 md:flex-row md:items-center md:justify-between">
@@ -275,7 +264,7 @@ export default function Dashboard({ stats, areas, displayName, course, exams, on
   );
 }
 
-function StatCard({ icon, tint, label, value, suffix, note }: { icon: ReactNode; tint: string; label: string; value: string; suffix: string; note: string }) {
+function StatCard({ icon, tint, label, value, suffix, note }) {
   return (
     <article className="rounded-2xl border border-line bg-white p-4">
       <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${tint}`}>{icon}</div>

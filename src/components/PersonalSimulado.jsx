@@ -3,14 +3,7 @@ import { Clock, Play } from 'lucide-react';
 
 const SIZES = [10, 15, 20];
 
-interface PersonalSimuladoProps {
-  eligible: number;
-  ready: boolean;
-  creating: boolean;
-  onStart: (quantidade: number) => void;
-}
-
-export default function PersonalSimulado({ eligible, ready, creating, onStart }: PersonalSimuladoProps) {
+export default function PersonalSimulado({ eligible, ready, creating, onStart }) {
   const options = SIZES.filter((size) => size <= eligible);
   const [size, setSize] = useState(options[0] ?? 10);
 

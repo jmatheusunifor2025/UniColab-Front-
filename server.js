@@ -4,7 +4,6 @@ import { createServer as createViteServer } from 'vite';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
-import { Question, QuestionComment } from './src/types';
 
 dotenv.config();
 
@@ -14,23 +13,23 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 // Lazy initialize Gemini API client
-let ai: GoogleGenAI | null = null;
+let ai = null;
 if (process.env.GEMINI_API_KEY) {
   ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
     httpOptions: {
       headers: {
         'User-Agent': 'aistudio-build',
-      }
-    }
+      },
+    },
   });
 }
 
 // Global list of questions seeded with standard ENADE questions
-let databaseQuestoes: Question[] = [
+let databaseQuestoes = [
   {
     id: 'en-01',
     text: 'No desenvolvimento de sistemas orientados a objetos, o padrão de projeto descritivo que visa garantir que uma determinada classe tenha exatamente uma única instância em todo o ciclo de execução, fornecendo um ponto de acesso global e seguro para ela na aplicação, é conhecido como:',
@@ -43,7 +42,7 @@ let databaseQuestoes: Question[] = [
       'Singleton (Padrão de Criação de Instância Única)',
       'Adapter (Padrão Estrutural de Adaptador de Interfaces)',
       'Observer (Padrão Comportamental de Observação de Associações)',
-      'Facade (Padrão Estrutural de Fachada Unificada)'
+      'Facade (Padrão Estrutural de Fachada Unificada)',
     ],
     correctAlternative: 1, // Singleton
     commentary: 'O Singleton é um padrão de criação que garante a existência de apenas uma instância de uma classe, mantendo uma referência estática global para a mesma. Factory Method cria instâncias variadas conforme parâmetros; Adapter converte uma interface em outra esperada pelos clientes; Observer gerencia dependências um-para-muitos entre objetos; Facade provê uma interface unificada para um conjunto de interfaces em um subsistema.',
@@ -54,16 +53,16 @@ let databaseQuestoes: Question[] = [
         userName: 'Carlos Levir',
         role: 'student',
         text: 'Esse padrão ajuda muito na conexão com bancos de dados, mas é preciso cuidado com concorrência.',
-        timestamp: '19/05/2026 14:32'
+        timestamp: '19/05/2026 14:32',
       },
       {
         id: 'c2',
         userName: 'Docente',
         role: 'teacher',
         text: 'Excelente ponto, Carlos! Em ambientes multi-thread, a inicialização do Singleton precisa deter um mecanismo reflexivo ou sincronizado síncrono para evitar instâncias concorrentes duplicadas.',
-        timestamp: '19/05/2026 15:45'
-      }
-    ]
+        timestamp: '19/05/2026 15:45',
+      },
+    ],
   },
   {
     id: 'en-02',
@@ -77,7 +76,7 @@ let databaseQuestoes: Question[] = [
       'Possibilidade de escalabilidade independente de componentes de gargalo e isolamento intrínseco de falhas específicas por serviço.',
       'Ausência total de necessidade de provisionamento de logs distribuídos ou de monitoramento de instâncias individuais do ecossistema.',
       'Facilidade de realizar transações atômicas distribuídas ACID complexas sem adicionar sobrecarga operacional de rede.',
-      'Garantia de que os bancos de dados de todos os serviços se mantenham consolidados em uma única máquina física síncrona.'
+      'Garantia de que os bancos de dados de todos os serviços se mantenham consolidados em uma única máquina física síncrona.',
     ],
     correctAlternative: 1, // Possibilidade de escalabilidade...
     commentary: 'A arquitetura de microserviços divide uma aplicação em serviços menores e independentes. A principal vantagem é que cada serviço individual pode ser escalado de maneira independente em servidores distintos de acordo com sua demanda específica (ex: escalar apenas o carrinho de compras), além de falhas em um serviço isolado não derrubarem toda a aplicação recursivamente.',
@@ -88,9 +87,9 @@ let databaseQuestoes: Question[] = [
         userName: 'Vinicius Gabriel',
         role: 'student',
         text: 'Já usei Docker para orquestrar microsserviços e a escalabilidade facilitou muito nosso escopo.',
-        timestamp: '19/05/2026 16:10'
-      }
-    ]
+        timestamp: '19/05/2026 16:10',
+      },
+    ],
   },
   {
     id: 'en-03',
@@ -104,12 +103,12 @@ let databaseQuestoes: Question[] = [
       'Foca unicamente em auditorias de balanço patrimonial e fiscalização de tributação nacional.',
       'Reflete o compromisso com diversidade, inclusão social, bem-estar funcional de colaboradores, integridade na cadeia produtiva e relação harmoniosa comunitária.',
       'Exclui do monitoramento social os fornecedores terceirizados no intuito de incentivar a autonomia privada.',
-      'Consiste em manter a governança executiva restrita apenas a investidores majoritários sem transparência geral.'
+      'Consiste em manter a governança executiva restrita apenas a investidores majoritários sem transparência geral.',
     ],
     correctAlternative: 2, // Reflete o compromisso...
     commentary: 'A letra "S" do ESG (Social) lida com as relações que a empresa estabelece com pessoas, tanto internas (funcionários, preenchendo diversidade, salários justos, saúde e segurança) quanto externas (comunidade local, fornecedores éticos, parceiros e consumidores).',
     references: 'Instituto Brasileiro de Governança Corporativa (IBGC). Caderno de Governança ESG nas Organizações.',
-    comments: []
+    comments: [],
   },
   {
     id: 'en-04',
@@ -123,12 +122,12 @@ let databaseQuestoes: Question[] = [
       'A redução imediata e drástica no tráfego de redes de fibra óptica por conta da velocidade interna de processamento local nos celulares.',
       'A eliminação programática de qualquer viés cognitivo devido ao rigor probabilístico estrito e homogeneidade dos desenvolvedores iniciais.',
       'O abandono em massa da necessidade de computadores de alto desempenho uma vez que todo LLM se autotreina sem hardware associado.',
-      'O encerramento iminente de pesquisas em métodos de programação heurística analítica pela automação completa das mentes científicas.'
+      'O encerramento iminente de pesquisas em métodos de programação heurística analítica pela automação completa das mentes científicas.',
     ],
     correctAlternative: 0,
     commentary: 'A disseminação de vieses preconceituosos existentes nos dados de treino históricos e o surgimento de alucinações (fatos gerados incorretamente com falsa aparência de autoridade) são os maiores desafios éticos na implantação indiscriminada de LLMs públicos.',
     references: 'Russell, S. & Norvig, P. Inteligência Artificial: Uma Abordagem Moderna. Rio de Janeiro: GEN LTC.',
-    comments: []
+    comments: [],
   },
   {
     id: 'en-05',
@@ -142,7 +141,7 @@ let databaseQuestoes: Question[] = [
       'O(n) - Ordem de tempo linear correspondente ao número total de nós.',
       'O(log n) - Representação de tempo logarítmico proporcional à altura equilibrada da árvore.',
       'O(n log n) - Relação de tempo de ordenação de divisão e conquista linear-logarítmico.',
-      'O(n²) - Complexidade quadrática com laços aninhados independentes.'
+      'O(n²) - Complexidade quadrática com laços aninhados independentes.',
     ],
     correctAlternative: 2, // O(log n)
     commentary: 'Como a árvore está perfeitamente balanceada por premissa da especificação, a sua altura máxima é expressa como O(log n). No pior caso de busca de uma chave inexistente ou em uma folha mais profunda, nós faremos no máximo um número de comparações proporcional ao tamanho do caminho da raiz até a folha mais baixa, correspondendo a O(log n). Se a árvore estivesse desbalanceada, a busca poderia degenerar para uma fila linear simples que seria O(n).',
@@ -153,9 +152,9 @@ let databaseQuestoes: Question[] = [
         userName: 'Lucas Bandeira',
         role: 'student',
         text: 'A jogada aqui é a palavra "BALANCEADA". Se não estivesse balanceada seria O(n) no pior caso!',
-        timestamp: '19/05/2026 18:02'
-      }
-    ]
+        timestamp: '19/05/2026 18:02',
+      },
+    ],
   },
   {
     id: 'en-06',
@@ -169,13 +168,13 @@ let databaseQuestoes: Question[] = [
       'A tabela deve estar na Primeira Forma Normal (1FN) e as chaves estrangeiras devem obrigatoriamente referenciar tabelas em 2FN diretamente.',
       'A tabela deve repousar sobre a 2FN e cada coluna sem chave deve ser mutualmente transiente funcional de qualquer atributo composto da chave principal.',
       'A tabela deve estar na Segunda Forma Normal (2FN) e não pode conter quaisquer dependências funcionais transitivas de atributos não-chave em relação à chave primária.',
-      'Todas as dependências transitivas devem ser reunidas no mesmo modelo relacional sem criar tabelas acessórias segregadas adicionais.'
+      'Todas as dependências transitivas devem ser reunidas no mesmo modelo relacional sem criar tabelas acessórias segregadas adicionais.',
     ],
-    correctAlternative: 3, // Dependências transitivas... (O(n) ou não transiente)
+    correctAlternative: 3, // Dependências transitivas...
     commentary: 'Para uma tabela estar em 3FN, ela precisa previamente atender a todas as exigências de 2FN e, adicionalmente, não possuir nenhum atributo não-chave que dependa de forma transitiva da chave primária através de outro atributo também não-chave. Em termos práticos, cada campo deve depender essencialmente da chave primária ("the key, the whole key, and nothing but the key, so help me Codd").',
     references: 'Elmasri, R. & Navathe, S. Sistemas de Banco de Dados. Pearson Education.',
-    comments: []
-  }
+    comments: [],
+  },
 ];
 
 // --- API ROUTES ---
@@ -189,12 +188,12 @@ app.get('/api/questoes', (req, res) => {
 app.post('/api/questoes', (req, res) => {
   try {
     const { text, type, area, year, difficulty, alternatives, correctAlternative, commentary, references } = req.body;
-    
+
     if (!text || !type || !area || !year || !difficulty || !alternatives || alternatives.length !== 5 || correctAlternative === undefined) {
       return res.status(400).json({ error: 'Campos obrigatórios insuficientes ou mal formatados.' });
     }
 
-    const newQuestion: Question = {
+    const newQuestion = {
       id: `custom-${Date.now()}`,
       text,
       type: type === 'geral' ? 'geral' : 'especifico',
@@ -205,12 +204,12 @@ app.post('/api/questoes', (req, res) => {
       correctAlternative: parseInt(correctAlternative) ?? 0,
       commentary: commentary || 'Sem justificativa detalhada cadastrada pelo professor.',
       references: references || 'Edições Recentes ENADE.',
-      comments: []
+      comments: [],
     };
 
     databaseQuestoes.unshift(newQuestion); // Add to beginning
     res.status(201).json(newQuestion);
-  } catch (err: any) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -225,24 +224,24 @@ app.post('/api/questoes/:id/comentarios', async (req, res) => {
       return res.status(400).json({ error: 'Autor e texto do comentário são obrigatórios.' });
     }
 
-    const question = databaseQuestoes.find(q => q.id === id);
+    const question = databaseQuestoes.find((q) => q.id === id);
     if (!question) {
       return res.status(404).json({ error: 'Questão não encontrada.' });
     }
 
     // Create student comment
-    const userComment: QuestionComment = {
+    const userComment = {
       id: `comm-${Date.now()}`,
       userName,
       role: role || 'student',
       text,
-      timestamp: new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }).substring(0, 16)
+      timestamp: new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }).substring(0, 16),
     };
 
     question.comments.push(userComment);
 
     // If student checked "Perguntar ao Professor de IA" or we want to react with AI
-    let aiComment: QuestionComment | null = null;
+    let aiComment = null;
     if (askAi && ai) {
       try {
         const prompt = `Você é um Professor Universitário Preparador de ENADE altamente competente e didático.
@@ -280,7 +279,7 @@ Instruções para Resposta:
           userName: 'Professor IA (UniColab)',
           role: 'ai',
           text: replyText,
-          timestamp: new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }).substring(0, 16)
+          timestamp: new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }).substring(0, 16),
         };
 
         question.comments.push(aiComment);
@@ -290,7 +289,7 @@ Instruções para Resposta:
     }
 
     res.json({ userComment, aiComment });
-  } catch (err: any) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -305,8 +304,8 @@ app.post('/api/gemini/explicar', async (req, res) => {
     }
 
     if (!ai) {
-      return res.json({ 
-        explanation: 'O serviço de IA está temporariamente indisponível (chave ausente), mas aqui está a análise oficial: A alternativa correta foi validada pelos editais oficiais do INEP de acordo com as referências acadêmicas.' 
+      return res.json({
+        explanation: 'O serviço de IA está temporariamente indisponível (chave ausente), mas aqui está a análise oficial: A alternativa correta foi validada pelos editais oficiais do INEP de acordo com as referências acadêmicas.',
       });
     }
 
@@ -331,7 +330,7 @@ Explique o erro do aluno de forma clara, amigável e educativa. Máximo de 3 par
     });
 
     res.json({ explanation: responseObj.text?.trim() });
-  } catch (err: any) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -346,7 +345,7 @@ app.post('/api/gemini/trilha', async (req, res) => {
         studyTrail: `### Trilha UniColab Estudo Recomendado
 1. **Foque nas disciplinas com erros**: Revise temas de arquitetura de software e engenharia de requisitos.
 2. **Faça resumos estruturados**: Dedique 20 minutos por dia a resolver questões comentadas do ENADE.
-3. **Mantenha a constância**: Vládia, priorize fazer um simulado semanal cronometrado para treinar a exaustão mental do dia oficial.`
+3. **Mantenha a constância**: Vládia, priorize fazer um simulado semanal cronometrado para treinar a exaustão mental do dia oficial.`,
       });
     }
 
@@ -367,7 +366,7 @@ Máximo de 15 linhas no total.`;
     });
 
     res.json({ studyTrail: responseObj.text?.trim() });
-  } catch (err: any) {
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

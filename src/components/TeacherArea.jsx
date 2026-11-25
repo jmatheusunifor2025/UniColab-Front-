@@ -1,23 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Question } from '../types';
 import { AlertCircle, CheckCircle, FilePlus2, ImagePlus, Info, Lock, Save, ShieldCheck, Sigma } from 'lucide-react';
-
-interface TeacherAreaProps {
-  onAddQuestion: (newQuestionData: {
-    text: string;
-    type: 'geral' | 'especifico';
-    area: string;
-    year: number;
-    difficulty: 'facil' | 'medio' | 'dificil';
-    alternatives: string[];
-    correctAlternative: number;
-    justifications: string[];
-    references: string;
-  }) => Promise<void>;
-  existingQuestions: Question[];
-  initialQuestion?: Question | null;
-  areas?: string[];
-}
 
 const AREAS = [
   'Padrões de Projeto & Engenharia de Software',
@@ -33,25 +15,13 @@ const AREAS = [
 const DRAFT_KEY = 'unicolab_question_draft';
 const STEPS = ['Contexto', 'Alternativas', 'Gabarito e referências'];
 
-interface Draft {
-  text: string;
-  type: 'geral' | 'especifico';
-  area: string;
-  year: string;
-  difficulty: 'facil' | 'medio' | 'dificil';
-  alternatives: string[];
-  correctIdx: number;
-  justifications: string[];
-  references: string;
-}
-
-function five(values: string[] | undefined) {
+function five(values) {
   const next = [...(values ?? [])];
   while (next.length < 5) next.push('');
   return next.slice(0, 5);
 }
 
-function emptyDraft(): Draft {
+function emptyDraft() {
   return {
     text: '',
     type: 'especifico',
@@ -65,7 +35,7 @@ function emptyDraft(): Draft {
   };
 }
 
-function fromQuestion(question: Question): Draft {
+function fromQuestion(question) {
   const justifications = five(question.justifications);
   if (justifications.every((item) => !item.trim()) && question.commentary && question.correctAlternative >= 0) {
     justifications[question.correctAlternative] = question.commentary;
@@ -83,11 +53,11 @@ function fromQuestion(question: Question): Draft {
   };
 }
 
-function loadDraft(): Draft | null {
+function loadDraft() {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<Draft> & { commentary?: string };
+    const parsed = JSON.parse(raw);
     const draft = { ...emptyDraft(), ...parsed, alternatives: five(parsed.alternatives), justifications: five(parsed.justifications) };
     if (draft.justifications.every((item) => !item.trim()) && parsed.commentary) {
       draft.justifications[draft.correctIdx] = parsed.commentary;
@@ -98,11 +68,11 @@ function loadDraft(): Draft | null {
   }
 }
 
-export default function TeacherArea({ onAddQuestion, existingQuestions, initialQuestion, areas = AREAS }: TeacherAreaProps) {
-  const [draft, setDraft] = useState<Draft>(() => initialQuestion ? fromQuestion(initialQuestion) : loadDraft() || emptyDraft());
+export default function TeacherArea({ onAddQuestion, existingQuestions, initialQuestion, areas = AREAS }) {
+  const [draft, setDraft] = useState(() => (initialQuestion ? fromQuestion(initialQuestion) : loadDraft() || emptyDraft()));
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [statusMessage, setStatusMessage] = useState(null);
   const [draftNote, setDraftNote] = useState('');
   const [startedWith] = useState(() => new Set(existingQuestions.map((question) => question.id)));
   const sessionQuestions = existingQuestions.filter((question) => !startedWith.has(question.id));
@@ -115,17 +85,17 @@ export default function TeacherArea({ onAddQuestion, existingQuestions, initialQ
 
   useEffect(() => {
     if (areas.length === 0) return;
-    setDraft((current) => areas.includes(current.area) ? current : { ...current, area: areas[0] });
+    setDraft((current) => (areas.includes(current.area) ? current : { ...current, area: areas[0] }));
   }, [areas]);
 
-  const patch = (partial: Partial<Draft>) => setDraft((current) => ({ ...current, ...partial }));
+  const patch = (partial) => setDraft((current) => ({ ...current, ...partial }));
 
   const saveDraft = () => {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     setDraftNote('Rascunho salvo neste dispositivo.');
   };
 
-  const appendToText = (snippet: string) => {
+  const appendToText = (snippet) => {
     patch({ text: `${draft.text}${draft.text ? '\n' : ''}${snippet}`.slice(0, 4000) });
   };
 
@@ -283,7 +253,7 @@ export default function TeacherArea({ onAddQuestion, existingQuestions, initialQ
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="text-sm">
                   <span className="mb-1.5 block text-xs font-medium text-slate-500">Componente</span>
-                  <select value={draft.type} onChange={(event) => patch({ type: event.target.value as Draft['type'] })} className="h-11 w-full rounded-xl border border-line px-3">
+                  <select value={draft.type} onChange={(event) => patch({ type: event.target.value })} className="h-11 w-full rounded-xl border border-line px-3">
                     <option value="especifico">Formação específica</option>
                     <option value="geral">Formação geral</option>
                   </select>
@@ -300,7 +270,7 @@ export default function TeacherArea({ onAddQuestion, existingQuestions, initialQ
                 </label>
                 <label className="text-sm">
                   <span className="mb-1.5 block text-xs font-medium text-slate-500">Nível de dificuldade</span>
-                  <select value={draft.difficulty} onChange={(event) => patch({ difficulty: event.target.value as Draft['difficulty'] })} className="h-11 w-full rounded-xl border border-line px-3">
+                  <select value={draft.difficulty} onChange={(event) => patch({ difficulty: event.target.value })} className="h-11 w-full rounded-xl border border-line px-3">
                     <option value="facil">Fácil</option>
                     <option value="medio">Médio</option>
                     <option value="dificil">Difícil</option>
@@ -446,7 +416,7 @@ export default function TeacherArea({ onAddQuestion, existingQuestions, initialQ
               )}
             </div>
           </div>
-          </section>
+        </section>
       </div>
     </div>
   );

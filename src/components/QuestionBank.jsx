@@ -1,27 +1,11 @@
-import { useMemo, useState, type ReactNode } from 'react';
-import { Question } from '../types';
+import { useMemo, useState } from 'react';
 import PersonalSimulado from './PersonalSimulado';
 import { ChevronLeft, ChevronRight, Clock, Eye, Pencil, Play, Plus, Search, Trash2, X } from 'lucide-react';
 
-interface QuestionBankProps {
-  questions: Question[];
-  variant?: 'student' | 'teacher';
-  exams?: { id: string; title: string; minutes: number; questionCount: number }[];
-  onStartExam?: (id: string) => void;
-  onExploreSingleQuestion?: (question: Question) => void;
-  onOpenCadastro?: () => void;
-  onEditQuestion?: (question: Question) => void;
-  onDeleteQuestion?: (id: string) => Promise<void> | void;
-  onBuildExam?: (ids: string[]) => void;
-  questionsReady?: boolean;
-  creatingPersonalExam?: boolean;
-  onCreatePersonalExam?: (quantidade: number) => void;
-}
-
-const DIFFICULTY_LABEL = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' } as const;
+const DIFFICULTY_LABEL = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' };
 const PAGE_SIZE = 6;
 
-function difficultyClass(level: Question['difficulty']) {
+function difficultyClass(level) {
   if (level === 'facil') return 'bg-emerald-50 text-emerald-700';
   if (level === 'medio') return 'bg-amber-50 text-amber-700';
   return 'bg-rose-50 text-rose-700';
@@ -40,23 +24,23 @@ export default function QuestionBank({
   questionsReady = false,
   creatingPersonalExam = false,
   onCreatePersonalExam,
-}: QuestionBankProps) {
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [areaFilter, setAreaFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'geral' | 'especifico'>('all');
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'facil' | 'medio' | 'dificil'>('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
-  const [sort, setSort] = useState<'recentes' | 'antigas' | 'enunciado'>('recentes');
+  const [sort, setSort] = useState('recentes');
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [preview, setPreview] = useState<Question | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<Question | null>(null);
+  const [selected, setSelected] = useState([]);
+  const [preview, setPreview] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
   const areas = useMemo(() => Array.from(new Set(questions.map((question) => question.area))).sort(), [questions]);
   const years = useMemo(
     () => Array.from(new Set(questions.map((question) => String(question.year)))).sort((a, b) => Number(b) - Number(a)),
-    [questions]
+    [questions],
   );
 
   const filteredQuestions = useMemo(() => {
@@ -90,8 +74,8 @@ export default function QuestionBank({
     setPage(1);
   };
 
-  const toggle = (id: string) => {
-    setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const toggle = (id) => {
+    setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   };
 
   const togglePage = () => {
@@ -177,13 +161,13 @@ export default function QuestionBank({
             <option value="all">Todos os anos</option>
             {years.map((year) => <option key={year} value={year}>{year}</option>)}
           </Select>
-          <Select label="Dificuldade" value={difficultyFilter} onChange={(value) => { setDifficultyFilter(value as typeof difficultyFilter); setPage(1); }}>
+          <Select label="Dificuldade" value={difficultyFilter} onChange={(value) => { setDifficultyFilter(value); setPage(1); }}>
             <option value="all">Todas as dificuldades</option>
             <option value="facil">Fácil</option>
             <option value="medio">Médio</option>
             <option value="dificil">Difícil</option>
           </Select>
-          <Select label="Tipo de questão" value={typeFilter} onChange={(value) => { setTypeFilter(value as typeof typeFilter); setPage(1); }}>
+          <Select label="Tipo de questão" value={typeFilter} onChange={(value) => { setTypeFilter(value); setPage(1); }}>
             <option value="all">Todos os tipos</option>
             <option value="geral">Formação geral</option>
             <option value="especifico">Componente específico</option>
@@ -199,7 +183,7 @@ export default function QuestionBank({
           Todas as questões
           <span className="ml-2 rounded-full bg-[#f3f1ff] px-2 py-0.5 text-xs font-semibold text-brand">{filteredQuestions.length}</span>
         </h2>
-        <select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)} className="h-10 rounded-xl border border-line bg-white px-3 text-sm">
+        <select value={sort} onChange={(event) => setSort(event.target.value)} className="h-10 rounded-xl border border-line bg-white px-3 text-sm">
           <option value="recentes">Mais recentes</option>
           <option value="antigas">Mais antigas</option>
           <option value="enunciado">Enunciado</option>
@@ -364,7 +348,7 @@ export default function QuestionBank({
   );
 }
 
-function Select({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: ReactNode }) {
+function Select({ label, value, onChange, children }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-medium text-slate-500">{label}</span>
@@ -375,7 +359,7 @@ function Select({ label, value, onChange, children }: { label: string; value: st
   );
 }
 
-function IconButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function IconButton({ label, onClick, children }) {
   return (
     <button type="button" aria-label={label} title={label} onClick={onClick} className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-canvas hover:text-ink">
       {children}
@@ -383,7 +367,7 @@ function IconButton({ label, onClick, children }: { label: string; onClick: () =
   );
 }
 
-function Pager({ page, pageCount, total, from, to, onPage }: { page: number; pageCount: number; total: number; from: number; to: number; onPage: (page: number) => void }) {
+function Pager({ page, pageCount, total, from, to, onPage }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-sm text-slate-500">
       <span>Mostrando {from} a {to} de {total} questões</span>
@@ -408,7 +392,7 @@ function Empty() {
   return <p className="px-4 py-12 text-center text-sm text-slate-500">Nenhuma questão corresponde a esses filtros.</p>;
 }
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-4 sm:items-center" onClick={onClose}>
       <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
