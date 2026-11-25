@@ -1,17 +1,8 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Question } from '../types';
+import { useEffect, useMemo, useState } from 'react';
 import { MessageSquare, RefreshCw, Search, Send, Sparkles } from 'lucide-react';
 
-interface ForumProps {
-  questions: Question[];
-  activeQuestion?: Question;
-  authorName: string;
-  authorRole: 'student' | 'teacher';
-  onAddComment: (qId: string, author: string, role: 'student' | 'teacher', commentText: string, askAi: boolean) => Promise<void>;
-}
-
-export default function Forum({ questions, activeQuestion, authorName, authorRole, onAddComment }: ForumProps) {
-  const [selectedQId, setSelectedQId] = useState<string>(activeQuestion?.id || questions[0]?.id || '');
+export default function Forum({ questions, activeQuestion, authorName, authorRole, onAddComment }) {
+  const [selectedQId, setSelectedQId] = useState(activeQuestion?.id || questions[0]?.id || '');
   const [query, setQuery] = useState('');
   const [newCommentText, setNewCommentText] = useState('');
   const [askAi, setAskAi] = useState(authorRole === 'student');
@@ -33,13 +24,13 @@ export default function Forum({ questions, activeQuestion, authorName, authorRol
     const term = query.trim().toLowerCase();
     if (!term) return questions;
     return questions.filter((question) =>
-      question.text.toLowerCase().includes(term) || question.area.toLowerCase().includes(term)
+      question.text.toLowerCase().includes(term) || question.area.toLowerCase().includes(term),
     );
   }, [questions, query]);
 
   const selectedQuestion = questions.find((question) => question.id === selectedQId) || visibleQuestions[0];
 
-  const handlePostComment = async (event: FormEvent) => {
+  const handlePostComment = async (event) => {
     event.preventDefault();
     if (!newCommentText.trim() || !selectedQuestion) return;
     setSubmitting(true);

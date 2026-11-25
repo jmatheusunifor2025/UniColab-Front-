@@ -1,14 +1,8 @@
 import { useState } from 'react';
-import { SessionUser } from '../types';
-
-interface SettingsPanelProps {
-  user: SessionUser;
-  onLogout: () => void;
-}
 
 const SETTINGS_KEY = 'unicolab_teacher_settings';
 
-export default function SettingsPanel({ user, onLogout }: SettingsPanelProps) {
+export default function SettingsPanel({ user, onLogout }) {
   const [notifyForum, setNotifyForum] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}').notifyForum !== false;
@@ -73,7 +67,7 @@ export default function SettingsPanel({ user, onLogout }: SettingsPanelProps) {
   );
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function Info({ label, value }) {
   return (
     <div>
       <dt className="text-xs text-slate-400">{label}</dt>

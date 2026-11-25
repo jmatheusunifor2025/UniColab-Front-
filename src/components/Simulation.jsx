@@ -1,25 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Question } from '../types';
-import { GradeResult } from '../api/unicolab';
+import { useState, useEffect, useRef } from 'react';
 import { Clock, AlertTriangle, CheckCircle, XCircle, ChevronLeft, ChevronRight, HelpCircle, Sparkles, RefreshCw } from 'lucide-react';
 
-interface SimulationProps {
-  questions: Question[];
-  limitMinutes: number;
-  title?: string;
-  deadline?: string;
-  startedAt?: string;
-  onGrade?: (answers: Record<string, number>, elapsedSeconds: number) => Promise<GradeResult>;
-  onFinishSimulation: (stats: { correct: number; total: number; durationSeconds: number; areasStats: { [area: string]: { total: number; correct: number } } }) => void;
-  onCancel: () => void;
-}
-
-export default function Simulation({ questions, limitMinutes, title, deadline, startedAt, onGrade, onFinishSimulation, onCancel }: SimulationProps) {
+export default function Simulation({ questions, limitMinutes, title, deadline, startedAt, onGrade, onFinishSimulation, onCancel }) {
   // Set of questions selected for this iteration
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [qId: string]: number }>({});
-  const [answerKey, setAnswerKey] = useState<Record<string, number>>({});
-  const [officialNotes, setOfficialNotes] = useState<Record<string, string>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [answerKey, setAnswerKey] = useState({});
+  const [officialNotes, setOfficialNotes] = useState({});
   const [grading, setGrading] = useState(false);
   const [gradeError, setGradeError] = useState('');
   const [timeLeft, setTimeLeft] = useState(() => (
@@ -32,13 +19,12 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
   const submittedRef = useRef(false);
   answersRef.current = selectedAnswers;
   timeLeftRef.current = timeLeft;
-  
-  // States for Gemini explanations
-  const [explainingId, setExplainingId] = useState<string | null>(null);
-  const [aiExplanations, setAiExplanations] = useState<{ [qId: string]: string }>({});
-  const [loadingAi, setLoadingAi] = useState<string | null>(null);
 
-  const correctOf = (question: Question) => answerKey[question.id] ?? question.correctAlternative;
+  // States for Gemini explanations
+  const [aiExplanations, setAiExplanations] = useState({});
+  const [loadingAi, setLoadingAi] = useState(null);
+
+  const correctOf = (question) => answerKey[question.id] ?? question.correctAlternative;
 
   const handleSubmit = async (auto = false) => {
     if (submittedRef.current || grading) return;
@@ -66,7 +52,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
     if (isSubmitted || isTimeUp) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         const next = deadline
           ? Math.max(0, Math.floor((Date.parse(deadline) - Date.now()) / 1000))
           : prev - 1;
@@ -82,20 +68,20 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
     return () => clearInterval(timer);
   }, [isSubmitted, isTimeUp, deadline]);
 
-  const handleSelectAnswer = (qId: string, answerIdx: number) => {
+  const handleSelectAnswer = (qId, answerIdx) => {
     if (isSubmitted) return;
-    setSelectedAnswers(prev => ({
+    setSelectedAnswers((prev) => ({
       ...prev,
-      [qId]: answerIdx
+      [qId]: answerIdx,
     }));
   };
 
   const handleCompleteAndReport = () => {
     // Generate areas stats
-    const areasStats: { [area: string]: { total: number; correct: number } } = {};
+    const areasStats = {};
     let correctCount = 0;
 
-    questions.forEach(q => {
+    questions.forEach((q) => {
       const isCorrect = selectedAnswers[q.id] !== undefined && selectedAnswers[q.id] === correctOf(q);
       if (isCorrect) correctCount++;
 
@@ -114,12 +100,12 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
       correct: correctCount,
       total: questions.length,
       durationSeconds: durationSeconds > 0 ? durationSeconds : 1,
-      areasStats
+      areasStats,
     });
   };
 
   // Get explanation from Gemini for a missed question
-  const fetchAiExplanation = async (question: Question, chosenIdx: number) => {
+  const fetchAiExplanation = async (question, chosenIdx) => {
     setLoadingAi(question.id);
     try {
       const response = await fetch('/api/gemini/explicar', {
@@ -129,14 +115,14 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
           questionText: question.text,
           alternatives: question.alternatives,
           correctIdx: correctOf(question),
-          chosenIdx
-        })
+          chosenIdx,
+        }),
       });
       const data = await response.json();
       if (data.explanation) {
-        setAiExplanations(prev => ({
+        setAiExplanations((prev) => ({
           ...prev,
-          [question.id]: data.explanation
+          [question.id]: data.explanation,
         }));
       }
     } catch (err) {
@@ -146,7 +132,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
     }
   };
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -158,7 +144,6 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
 
   return (
     <div className="space-y-6">
-      
       {/* Simulation Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-3xs">
         <div className="space-y-1">
@@ -169,7 +154,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-extrabold text-slate-900">{title || "Simulado Cronometrado ENADE"}</h2>
+            <h2 className="text-lg font-extrabold text-slate-900">{title || 'Simulado Cronometrado ENADE'}</h2>
           </div>
           <p className="text-xs text-slate-400 pl-8 font-medium">
             Progresso: {answeredCount} de {totalQuestions} questões respondidas
@@ -179,10 +164,11 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
         {/* Chronometer */}
         <div className="flex items-center gap-3 w-full md:w-auto self-stretch md:self-auto">
           <div className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-mono text-sm font-bold transition-all ${
-            timeLeft < 60 
-              ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse' 
+            timeLeft < 60
+              ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse'
               : 'bg-slate-50 border-slate-200 text-slate-800'
-          }`}>
+          }`}
+          >
             <Clock className="w-4 h-4 shrink-0 text-slate-500" />
             {formatTime(timeLeft)}
           </div>
@@ -224,23 +210,22 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
 
       {/* Main Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
         {/* Navigation / Selection Panel (3 Cols) */}
         <div className="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-3xs self-start space-y-4">
           <h3 className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Mapa do Simulado</h3>
-          
+
           <div className="grid grid-cols-4 gap-2">
             {questions.map((q, idx) => {
               const isAnswered = selectedAnswers[q.id] !== undefined;
               const isCurrent = idx === currentIdx;
-              
+
               let btnClass = 'border-slate-200 text-slate-600 bg-white hover:bg-slate-50';
               if (isCurrent) {
                 btnClass = 'border-brand bg-brand text-white font-bold';
               } else if (isSubmitted) {
                 const wasCorrect = selectedAnswers[q.id] !== undefined && selectedAnswers[q.id] === correctOf(q);
-                btnClass = wasCorrect 
-                  ? 'border-emerald-250 bg-emerald-50 text-emerald-800 font-bold' 
+                btnClass = wasCorrect
+                  ? 'border-emerald-250 bg-emerald-50 text-emerald-800 font-bold'
                   : 'border-rose-250 bg-rose-50 text-rose-800 font-bold';
               } else if (isAnswered) {
                 btnClass = 'border-slate-300 bg-slate-50 text-slate-800 font-bold';
@@ -260,21 +245,21 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
 
           <div className="pt-4 border-t border-slate-100 space-y-2.5 text-[10px] text-slate-400 font-medium">
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-white border border-slate-200"></span>
+              <span className="w-2.5 h-2.5 rounded bg-white border border-slate-200" />
               <span>Não respondido</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded bg-slate-100 border border-slate-300"></span>
+              <span className="w-2.5 h-2.5 rounded bg-slate-100 border border-slate-300" />
               <span>Respondido</span>
             </div>
             {isSubmitted && (
               <>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded bg-[#10b981]"></span>
+                  <span className="w-2.5 h-2.5 rounded bg-[#10b981]" />
                   <span className="text-emerald-700 font-bold">Resposta Correta</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded bg-rose-500"></span>
+                  <span className="w-2.5 h-2.5 rounded bg-rose-500" />
                   <span className="text-rose-700 font-bold">Resposta Incorreta</span>
                 </div>
               </>
@@ -284,7 +269,6 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
 
         {/* Active Question Panel (9 Cols) */}
         <div className="lg:col-span-9 bg-white p-6 md:p-8 rounded-2xl border border-slate-200/80 shadow-3xs space-y-6">
-          
           {/* Metadata */}
           <div className="flex flex-wrap gap-2 items-center text-xs">
             <span className="font-bold text-slate-400">Questão {currentIdx + 1} de {totalQuestions}</span>
@@ -311,7 +295,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
               const letter = String.fromCharCode(65 + idx); // A, B, C, D, E
               const isSelected = selectedAnswers[currentQuestion.id] === idx;
               const isCorrectAlternative = correctOf(currentQuestion) === idx;
-              
+
               let altClass = 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700';
               let badgeColor = 'bg-slate-100 border border-slate-200 text-slate-600';
 
@@ -353,7 +337,6 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
           {/* Submitted feedback, comment, and Gemini assistant triggers */}
           {isSubmitted && (
             <div className="mt-8 pt-6 border-t border-slate-100 space-y-6">
-              
               {/* Correction Verdict Header */}
               <div className="flex items-start gap-3">
                 {selectedAnswers[currentQuestion.id] !== undefined && selectedAnswers[currentQuestion.id] === correctOf(currentQuestion) ? (
@@ -376,7 +359,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
                 )}
               </div>
 
-              {/* Expert Static Commentary (The must-have described in the slides!) */}
+              {/* Expert Static Commentary */}
               <div className="bg-blue-50/40 border border-blue-100/50 rounded-xl p-5 space-y-2">
                 <h4 className="text-sm font-bold text-blue-950 flex items-center gap-1.5">
                   <HelpCircle className="w-4 h-4 text-blue-600" />
@@ -392,7 +375,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
                 )}
               </div>
 
-              {/* Interactive IA Explanation (The innovative part: Gemini reviews the wrong answer choice!) */}
+              {/* Interactive IA Explanation */}
               {selectedAnswers[currentQuestion.id] !== undefined && selectedAnswers[currentQuestion.id] !== correctOf(currentQuestion) && (
                 <div className="bg-indigo-950 text-indigo-50 border border-indigo-800 rounded-xl p-5 space-y-3">
                   <div className="flex justify-between items-center">
@@ -413,9 +396,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
                             Analisando...
                           </>
                         ) : (
-                          <>
-                            Explicar Meu Erro
-                          </>
+                          <>Explicar Meu Erro</>
                         )}
                       </button>
                     )}
@@ -434,14 +415,13 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
                   )}
                 </div>
               )}
-
             </div>
           )}
 
           {/* Card footer pagination navigation buttons */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
             <button
-              onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
+              onClick={() => setCurrentIdx((prev) => Math.max(0, prev - 1))}
               disabled={currentIdx === 0}
               className="inline-flex items-center gap-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 disabled:hover:bg-slate-100 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
@@ -454,7 +434,7 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
             </span>
 
             <button
-              onClick={() => setCurrentIdx(prev => Math.min(totalQuestions - 1, prev + 1))}
+              onClick={() => setCurrentIdx((prev) => Math.min(totalQuestions - 1, prev + 1))}
               disabled={currentIdx === totalQuestions - 1}
               className="inline-flex items-center gap-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-40 disabled:hover:bg-slate-100 text-xs font-bold rounded-xl transition-all cursor-pointer"
             >
@@ -462,11 +442,8 @@ export default function Simulation({ questions, limitMinutes, title, deadline, s
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

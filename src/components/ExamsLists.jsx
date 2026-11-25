@@ -1,29 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Question } from '../types';
 import { ClipboardList } from 'lucide-react';
 import { createExam, listExams } from '../api/unicolab';
 
-interface ExamList {
-  id: string;
-  title: string;
-  minutes: number;
-  questionIds: string[];
-  createdAt: string;
-}
-
-interface ExamsListsProps {
-  questions: Question[];
-  seedIds?: string[];
-}
-
-export default function ExamsLists({ questions, seedIds = [] }: ExamsListsProps) {
-  const [lists, setLists] = useState<ExamList[]>([]);
+export default function ExamsLists({ questions, seedIds = [] }) {
+  const [lists, setLists] = useState([]);
   const [saving, setSaving] = useState(false);
   const [title, setTitle] = useState('');
   const [minutes, setMinutes] = useState(30);
-  const [selected, setSelected] = useState<string[]>(seedIds);
+  const [selected, setSelected] = useState(seedIds);
   const [query, setQuery] = useState('');
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState(null);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -65,7 +51,7 @@ export default function ExamsLists({ questions, seedIds = [] }: ExamsListsProps)
     setMessage('');
     try {
       const created = await createExam(title.trim(), minutes, selected);
-      const item: ExamList = { ...created, createdAt: 'no servidor' };
+      const item = { ...created, createdAt: 'no servidor' };
       setLists((current) => [item, ...current.filter((list) => list.id !== item.id)]);
       setTitle('');
       setSelected([]);
@@ -109,7 +95,7 @@ export default function ExamsLists({ questions, seedIds = [] }: ExamsListsProps)
                     <input
                       type="checkbox"
                       checked={checked}
-                      onChange={() => setSelected((current) => checked ? current.filter((id) => id !== question.id) : [...current, question.id])}
+                      onChange={() => setSelected((current) => (checked ? current.filter((id) => id !== question.id) : [...current, question.id]))}
                       className="mt-1 accent-brand"
                     />
                     <span>
@@ -141,7 +127,7 @@ export default function ExamsLists({ questions, seedIds = [] }: ExamsListsProps)
             <ul className="mt-4 space-y-3">
               {lists.map((item) => {
                 const open = openId === item.id;
-                const linked = item.questionIds.map((id) => questions.find((question) => question.id === id)).filter(Boolean) as Question[];
+                const linked = item.questionIds.map((id) => questions.find((question) => question.id === id)).filter(Boolean);
                 return (
                   <li key={item.id} className="rounded-2xl border border-line p-3">
                     <button type="button" onClick={() => setOpenId(open ? null : item.id)} className="w-full text-left">
@@ -158,7 +144,6 @@ export default function ExamsLists({ questions, seedIds = [] }: ExamsListsProps)
                         )}
                       </ol>
                     )}
-
                   </li>
                 );
               })}

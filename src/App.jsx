@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Question, SessionUser, UserStats } from './types';
 import Dashboard from './components/Dashboard';
 import QuestionBank from './components/QuestionBank';
 import Simulation from './components/Simulation';
@@ -24,16 +23,12 @@ import {
   loadQuestions,
   loadStudentStats,
   createPersonalExam,
-  RemoteExam,
   signOut,
   startExam,
-  StartedExam,
   submitExam,
 } from './api/unicolab';
 
-type AppTab = 'dashboard' | 'banco' | 'forum' | 'professor' | 'trilha' | 'painel' | 'provas' | 'config';
-
-const EMPTY_STATS: UserStats = {
+const EMPTY_STATS = {
   points: 0,
   completedQuestionsCount: 0,
   correctCount: 0,
@@ -42,7 +37,7 @@ const EMPTY_STATS: UserStats = {
   areas: [],
 };
 
-function readSession(): SessionUser | null {
+function readSession() {
   const saved = sessionStorage.getItem('unicolab_session') || localStorage.getItem('unicolab_session');
   if (!saved) return null;
   try {
@@ -61,25 +56,25 @@ function readSession(): SessionUser | null {
 }
 
 export default function App() {
-  const [loggedInUser, setLoggedInUser] = useState<SessionUser | null>(() => (readToken() ? readSession() : null));
-  const [activeTab, setActiveTab] = useState<AppTab>(() => (readSession()?.role === 'teacher' ? 'painel' : 'dashboard'));
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [areaNames, setAreaNames] = useState<string[]>([]);
+  const [loggedInUser, setLoggedInUser] = useState(() => (readToken() ? readSession() : null));
+  const [activeTab, setActiveTab] = useState(() => (readSession()?.role === 'teacher' ? 'painel' : 'dashboard'));
+  const [questions, setQuestions] = useState([]);
+  const [areaNames, setAreaNames] = useState([]);
   const [loadError, setLoadError] = useState('');
-  const [hiddenIds, setHiddenIds] = useState<string[]>([]);
-  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
-  const [examSeed, setExamSeed] = useState<string[]>([]);
-  const [stats, setStats] = useState<UserStats>(EMPTY_STATS);
-  const [activeSimQuestions, setActiveSimQuestions] = useState<Question[] | null>(null);
+  const [hiddenIds, setHiddenIds] = useState([]);
+  const [editingQuestion, setEditingQuestion] = useState(null);
+  const [examSeed, setExamSeed] = useState([]);
+  const [stats, setStats] = useState(EMPTY_STATS);
+  const [activeSimQuestions, setActiveSimQuestions] = useState(null);
   const [activeSimMinutes, setActiveSimMinutes] = useState(10);
-  const [studentExams, setStudentExams] = useState<RemoteExam[]>([]);
-  const [examRun, setExamRun] = useState<StartedExam | null>(null);
+  const [studentExams, setStudentExams] = useState([]);
+  const [examRun, setExamRun] = useState(null);
   const [banner, setBanner] = useState('');
   const [questionsReady, setQuestionsReady] = useState(false);
   const [creatingExam, setCreatingExam] = useState(false);
-  const [activeForumQuestion, setActiveForumQuestion] = useState<Question | undefined>(undefined);
+  const [activeForumQuestion, setActiveForumQuestion] = useState(undefined);
 
-  const handleLogin = (user: SessionUser, persist: boolean) => {
+  const handleLogin = (user, persist) => {
     sessionStorage.removeItem('unicolab_session');
     localStorage.removeItem('unicolab_session');
     const store = persist ? localStorage : sessionStorage;
@@ -158,7 +153,7 @@ export default function App() {
 
   useEffect(() => {
     if (!loggedInUser) return;
-    const allowed: AppTab[] = loggedInUser.role === 'teacher'
+    const allowed = loggedInUser.role === 'teacher'
       ? ['painel', 'banco', 'forum', 'professor', 'provas', 'config']
       : ['dashboard', 'banco', 'forum', 'trilha'];
     if (!allowed.includes(activeTab)) {
@@ -175,7 +170,7 @@ export default function App() {
   const bancaExams = studentExams.filter((exam) => !exam.personal);
   const eligibleQuestions = visibleQuestions.filter((question) => question.hasJustification).length;
 
-  const handleCreatePersonalExam = async (quantidade: number) => {
+  const handleCreatePersonalExam = async (quantidade) => {
     setLoadError('');
     setBanner('');
     setCreatingExam(true);
@@ -205,7 +200,7 @@ export default function App() {
     setActiveTab('dashboard');
   };
 
-  const handleStartExam = async (id: string) => {
+  const handleStartExam = async (id) => {
     setLoadError('');
     setBanner('');
     try {
@@ -234,28 +229,18 @@ export default function App() {
     if (confirm('Deseja fechar a prática? Seu progresso parcial será perdido.')) setActiveSimQuestions(null);
   };
 
-  const handleTeacherAddQuestion = async (newQuestionData: {
-    text: string;
-    type: string;
-    area: string;
-    year: number;
-    difficulty: string;
-    alternatives: string[];
-    correctAlternative: number;
-    justifications: string[];
-    references: string;
-  }) => {
+  const handleTeacherAddQuestion = async (newQuestionData) => {
     await createQuestion(newQuestionData);
     setQuestions(await loadQuestions());
   };
 
-  const handleAddForumComment = async (questionId: string, _author: string, _role: 'student' | 'teacher', commentText: string) => {
+  const handleAddForumComment = async (questionId, _author, _role, commentText) => {
     await addComment(questionId, commentText);
     setQuestions(await loadQuestions());
     if (!isTeacher) setStats(await loadStudentStats());
   };
 
-  const openCadastro = (question?: Question | null) => {
+  const openCadastro = (question) => {
     setEditingQuestion(question || null);
     setActiveTab('professor');
     setActiveSimQuestions(null);
